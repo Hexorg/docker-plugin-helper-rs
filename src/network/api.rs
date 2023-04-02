@@ -1,16 +1,18 @@
 use std::collections::HashMap;
 
-use serde::{Serialize, ser::SerializeMap, Deserialize, de::Visitor};
+use serde::{Serialize, Deserialize};
 
-const DEFAULT_CONTENT_TYPE:&str = "application/vnd.docker.plugins.v1.1+json";
+/// Content-type header value that docker expects in your responses.
+pub const DEFAULT_CONTENT_TYPE:&str = "application/vnd.docker.plugins.v1.1+json";
 const ACTIVATE_URL:&str = "/Plugin.Activate";
 
 const MANIFEST:&str = "{\"Implements\": [\"NetworkDriver\"]}";
 const EMPTY: &str = "{}";
-// LocalScope is the correct scope response for a local scope driver
-const LOCAL_SCOPE:&str = "local";
-// GlobalScope is the correct scope response for a global scope driver
-const GLOBAL_SCOPE:&str = "global";
+
+/// LocalScope is the correct scope response for a local scope driver
+pub const LOCAL_SCOPE:&str = "local";
+/// GlobalScope is the correct scope response for a global scope driver
+pub const GLOBAL_SCOPE:&str = "global";
 
 const CAPABILITIES_PATH   :&str = "/NetworkDriver.GetCapabilities";
 const ALLOCATE_NETWORK_PATH:&str = "/NetworkDriver.AllocateNetwork";
@@ -26,8 +28,6 @@ const DISCOVER_NEW_PATH    :&str = "/NetworkDriver.DiscoverNew";
 const DISCOVER_DELETE_PATH :&str = "/NetworkDriver.DiscoverDelete";
 const PROGRAM_EXT_CONN_PATH :&str = "/NetworkDriver.ProgramExternalConnectivity";
 const REVOKE_EXT_CONN_PATH: &str = "/NetworkDriver.RevokeExternalConnectivity";
-
-
 
 #[derive(Serialize)]
 pub struct CapabilitiesResponse<'a> {
@@ -122,6 +122,8 @@ pub struct ErrorResponse<'a> {
 }
 
 #[derive(Debug, Serialize)]
+/// InterfaceName consists of the name of the interface in the global netns and
+/// the desired prefix to be appended to the interface inside the container netns
 pub struct InterfaceName {
     #[serde(rename = "SrcName")]
 	pub src_name: String,
@@ -197,6 +199,7 @@ pub struct ExternalConnectivityRequest<'a> {
     pub options: HashMap<&'a str, &'a str>
 }
 
+/// Represent the interface a Network driver must fulfill.
 pub trait Network {
     fn get_capabilities(&self) -> CapabilitiesResponse;
     fn create_network(&self, request: &CreateNetworkRequest);
@@ -214,6 +217,7 @@ pub trait Network {
 	fn revoke_external_connectivity(&self, request: &EndpointRequest);
 }
 
+/// Parse the data, route request to a proper function in the `Network` trait and serialize JSON string from the result if any.
 pub fn post<N:Network>(driver:&N, url:&str, data:&str) -> String {
     match url {
         ACTIVATE_URL => String::from(MANIFEST),
