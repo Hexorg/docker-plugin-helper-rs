@@ -29,478 +29,174 @@ const REVOKE_EXT_CONN_PATH: &str = "/NetworkDriver.RevokeExternalConnectivity";
 
 
 
+#[derive(Serialize)]
 pub struct CapabilitiesResponse<'a> {
+    #[serde(rename = "Scope")]
     pub scope: &'a str,
+    #[serde(rename = "ConnectivityScope")]
 	pub connectivity_scope: &'a str,
 }
 
-impl<'a> Serialize for CapabilitiesResponse<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-        let mut map = serializer.serialize_map(Some(2))?;
-        map.serialize_entry("Scope", self.scope)?;
-        map.serialize_entry("ConnectivityScope", self.connectivity_scope)?;
-        map.end()
-    }
+#[derive(Serialize)]
+pub struct AllocateNetworkResponse<'a> {
+    #[serde(rename = "Options")]
+    options:HashMap<&'a str, &'a str>
 }
 
-pub struct AllocateNetworkResponse<'a>{options:HashMap<&'a str, &'a str>}
-impl<'a> Serialize for AllocateNetworkResponse<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-        let mut map = serializer.serialize_map(Some(1))?;
-        map.serialize_entry("Options", &self.options)?;
-        map.end()
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct EndpointInterface<'a> {
+    #[serde(rename = "Address")]
 	pub address:&'a str,
+    #[serde(rename = "AddressIPv6")]
 	pub address_ipv6:&'a str,
+    #[serde(rename = "MacAddress")]
 	pub address_mac:&'a str
 }
-impl<'a> Serialize for EndpointInterface<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-        let mut map = serializer.serialize_map(Some(3))?;
-        map.serialize_entry("Address", self.address)?;
-        map.serialize_entry("AddressIPv6", self.address_ipv6)?;
-        map.serialize_entry("MacAddress", self.address_mac)?;
-        map.end()
-    }
-}
-struct EndpointInterfaceVisitor;
-impl<'de> Visitor<'de> for EndpointInterfaceVisitor {
-    type Value = EndpointInterface<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut address = None;
-                let mut address_ipv6 = None;
-                let mut address_mac = None;
-
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "Address" => address = Some(map.next_value::<&str>()?),
-                        "AddressIPv6" => address_ipv6 = Some(map.next_value::<&str>()?),
-                        "MacAddress" => address_mac = Some(map.next_value::<&str>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{address:address.unwrap(), address_ipv6:address_ipv6.unwrap(), address_mac:address_mac.unwrap()})
-
-    }
-}
-impl<'de> Deserialize<'de> for EndpointInterface<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(EndpointInterfaceVisitor{})
-    }
+#[derive(Serialize)]
+pub struct CreateEndpointResponse<'a> {
+    #[serde(rename = "Interface")]
+    interface: EndpointInterface<'a>
 }
 
-pub struct CreateEndpointResponse<'a> {interface: EndpointInterface<'a>}
-impl<'a> Serialize for CreateEndpointResponse<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-        let mut map = serializer.serialize_map(Some(1))?;
-        map.serialize_entry("Interface", &self.interface)?;
-        map.end()
-    }
+#[derive(Serialize)]
+pub struct InfoResponse<'a>{
+    #[serde(rename = "Value")]
+    value: HashMap<&'a str, &'a str>
 }
 
-
-pub struct InfoResponse<'a>{value: HashMap<&'a str, &'a str>}
-impl<'a> Serialize for InfoResponse<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-        let mut map = serializer.serialize_map(Some(1))?;
-        map.serialize_entry("Value", &self.value)?;
-        map.end()
-    }
-}
-#[derive(Debug)]
-pub struct JoinResponse<'a>{
+#[derive(Debug, Deserialize)]
+pub struct JoinRequest<'a>{
+    #[serde(rename = "NetworkId")]
     pub network_id: &'a str,
+    #[serde(rename = "EndpointId")]
 	pub endpoint_id: &'a str,
+    #[serde(rename = "SandboxKey")]
 	pub sandbox_key: &'a str,
+    #[serde(rename = "Options")]
 	pub options: HashMap<&'a str, &'a str>
 }
-impl<'a> Serialize for JoinResponse<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-        let mut map = serializer.serialize_map(Some(4))?;
-        map.serialize_entry("NetworkID", self.network_id)?;
-        map.serialize_entry("EndpointID", self.endpoint_id)?;
-        map.serialize_entry("SandboxKey", self.sandbox_key)?;
-        map.serialize_entry("Options", &self.options)?;
-        map.end()
-    }
+
+#[derive(Serialize)]
+struct StaticRoute<'a> {
+    #[serde(rename = "Destination")]
+	destination:&'a str,
+    #[serde(rename = "RouteType")]
+	route_type: i64,
+    #[serde(rename = "NextHop")]
+	next_hop: &'a str
 }
 
-#[derive(Debug)]
+#[derive(Serialize)]
+pub struct JoinResponse<'a> {
+    #[serde(rename = "InterfaceName")]
+	interface_name: InterfaceName,
+    #[serde(rename = "Gateway")]
+	gateway: &'a str,
+    #[serde(rename = "GatewayIPv6")]
+	gateway_ipv6: &'a str,
+    #[serde(rename = "StaticRoutes")]
+	static_routes: Vec<StaticRoute<'a>>,
+    #[serde(rename = "DisableGatewayService")]
+	disable_gateway_service: bool
+}
+
+
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IPAMData<'a>{
+    #[serde(rename = "AddressSpace")]
     pub address_space: &'a str,
+    #[serde(rename = "Pool")]
 	pub pool: &'a str,
+    #[serde(rename = "Gateway")]
 	pub gateway: &'a str,
+    #[serde(rename = "AuxAddresses")]
 	pub aux_addresses: HashMap<&'a str, &'a str>
 }
-struct IPAMDataVisitor;
-impl<'de> Visitor<'de> for IPAMDataVisitor {
-    type Value = IPAMData<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut address_space = None;
-                let mut pool = None;
-                let mut gateway = None;
-                let mut aux_addresses = None;
-
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "AddressSpace" => address_space = Some(map.next_value::<&str>()?),
-                        "Pool" => pool = Some(map.next_value::<&str>()?),
-                        "Gateway" => gateway = Some(map.next_value::<&str>()?),
-                        "AuxAddresses" => aux_addresses = Some(map.next_value::<HashMap<&str, &str>>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{address_space:address_space.unwrap(), pool:pool.unwrap(), gateway:gateway.unwrap(), aux_addresses:aux_addresses.unwrap()})
-
-    }
-}
-impl<'de> Deserialize<'de> for IPAMData<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(IPAMDataVisitor{})
-    }
+#[derive(Serialize)]
+pub struct ErrorResponse<'a> {
+    #[serde(rename = "Err")]
+    err: &'a str
 }
 
-impl<'a> Serialize for IPAMData<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-        let mut map = serializer.serialize_map(Some(4))?;
-        map.serialize_entry("AddressSpace", self.address_space)?;
-        map.serialize_entry("Pool", self.pool)?;
-        map.serialize_entry("Gateway", self.gateway)?;
-        map.serialize_entry("AuxAddresses", &self.aux_addresses)?;
-        map.end()
-    }
-}
-pub struct ErrorResponse<'a>{err: &'a str}
-impl<'a> Serialize for ErrorResponse<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer {
-        let mut map = serializer.serialize_map(Some(1))?;
-        map.serialize_entry("Err", self.err)?;
-        map.end()
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct InterfaceName {
+    #[serde(rename = "SrcName")]
 	pub src_name: String,
+    #[serde(rename = "DstPrefix")]
 	pub dst_prefix: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct CreateNetworkRequest<'a>{
+    #[serde(rename = "NetworkId")]
     pub network_id: &'a str,
+    #[serde(rename = "Options")]
 	pub options: HashMap<&'a str, &'a str>,
+    #[serde(rename = "IPv4Data")]
 	pub ipv4_data: Vec<IPAMData<'a>>,
+    #[serde(rename = "IPv6Data")]
 	pub ipv6_data: Vec<IPAMData<'a>>,
 }
-struct CreateNetworkRequestVisitor;
-impl<'de> Visitor<'de> for CreateNetworkRequestVisitor {
-    type Value = CreateNetworkRequest<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut network_id = None;
-                let mut options = None;
-                let mut ipv4_data = None;
-                let mut ipv6_data = None;
-
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "NetworkId" => network_id = Some(map.next_value::<&str>()?),
-                        "Options" => options = Some(map.next_value::<HashMap<&str, &str>>()?),
-                        "IPv4Data" => ipv4_data = Some(map.next_value::<Vec<IPAMData>>()?),
-                        "IPv6Data" => ipv6_data = Some(map.next_value::<Vec<IPAMData>>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{network_id:network_id.unwrap(), options:options.unwrap(), ipv4_data:ipv4_data.unwrap(), ipv6_data:ipv6_data.unwrap()})
-    }
-}
-impl<'de> Deserialize<'de> for CreateNetworkRequest<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(CreateNetworkRequestVisitor{})
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct AllocateNetworkRequest<'a> {
+    #[serde(rename = "NetworkId")]
     pub network_id: &'a str,
-    pub options: HashMap<&'a str, &'a str>,
-    pub ipv4_data: Vec<IPAMData<'a>>,
-    pub ipv6_data: Vec<IPAMData<'a>>
+    #[serde(rename = "Options")]
+	pub options: HashMap<&'a str, &'a str>,
+    #[serde(rename = "IPv4Data")]
+	pub ipv4_data: Vec<IPAMData<'a>>,
+    #[serde(rename = "IPv6Data")]
+	pub ipv6_data: Vec<IPAMData<'a>>,
 }
-struct AllocateNetworkRequestVisitor;
-impl<'de> Visitor<'de> for AllocateNetworkRequestVisitor {
-    type Value = AllocateNetworkRequest<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut network_id = None;
-                let mut options = None;
-                let mut ipv4_data = None;
-                let mut ipv6_data = None;
-
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "NetworkId" => network_id = Some(map.next_value::<&str>()?),
-                        "Options" => options = Some(map.next_value::<HashMap<&str, &str>>()?),
-                        "IPv4Data" => ipv4_data = Some(map.next_value::<Vec<IPAMData>>()?),
-                        "IPv6Data" => ipv6_data = Some(map.next_value::<Vec<IPAMData>>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{network_id:network_id.unwrap(), options:options.unwrap(), ipv4_data:ipv4_data.unwrap(), ipv6_data:ipv6_data.unwrap()})
-    }
-}
-impl<'de> Deserialize<'de> for AllocateNetworkRequest<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(AllocateNetworkRequestVisitor{})
-    }
-}
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct NetworkRequest<'a> {
-    pub network_id:&'a str
+    #[serde(rename = "NetworkId")]
+    pub network_id: &'a str,
 }
-struct NetworkRequestVisitor;
-impl<'de> Visitor<'de> for NetworkRequestVisitor {
-    type Value = NetworkRequest<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut network_id = None;
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "NetworkId" => network_id = Some(map.next_value::<&str>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{network_id:network_id.unwrap()})
-    }
-}
-impl<'de> Deserialize<'de> for NetworkRequest<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(NetworkRequestVisitor{})
-    }
-}
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct EndpointRequest<'a> {
+    #[serde(rename = "NetworkId")]
     pub network_id:&'a str,
+    #[serde(rename = "EndpointId")]
     pub endpoint_id:&'a str,
 }
-struct EndpointRequestVisitor;
-impl<'de> Visitor<'de> for EndpointRequestVisitor {
-    type Value = EndpointRequest<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut network_id = None;
-                let mut endpoint_id = None;
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "NetworkId" => network_id = Some(map.next_value::<&str>()?),
-                        "EndpointId" => endpoint_id = Some(map.next_value::<&str>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{network_id:network_id.unwrap(), endpoint_id:endpoint_id.unwrap()})
-    }
-}
-impl<'de> Deserialize<'de> for EndpointRequest<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(EndpointRequestVisitor{})
-    }
-}
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct CreateEndpointRequest<'a> {
+    #[serde(rename = "NetworkId")]
     pub network_id:&'a str,
+    #[serde(rename = "EndpointId")]
     pub endpoint_id:&'a str,
+    #[serde(rename = "Interface")]
     pub interface: EndpointInterface<'a>,
+    #[serde(rename = "Options")]
     pub options: HashMap<&'a str, &'a str>
 }
-struct CreateEndpointRequestVisitor;
-impl<'de> Visitor<'de> for CreateEndpointRequestVisitor {
-    type Value = CreateEndpointRequest<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut network_id = None;
-                let mut endpoint_id = None;
-                let mut interface = None;
-                let mut options = None;
-
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "NetworkId" => network_id = Some(map.next_value::<&str>()?),
-                        "Options" => options = Some(map.next_value::<HashMap<&str, &str>>()?),
-                        "EndpointId" => endpoint_id = Some(map.next_value::<&str>()?),
-                        "Interface" => interface = Some(map.next_value::<EndpointInterface>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{network_id:network_id.unwrap(), options:options.unwrap(), endpoint_id:endpoint_id.unwrap(), interface:interface.unwrap()})
-    }
-}
-impl<'de> Deserialize<'de> for CreateEndpointRequest<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(CreateEndpointRequestVisitor{})
-    }
-}
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct DiscoverRequest<'a> {
+    #[serde(rename = "DiscoveryType")]
     pub discovery_type: i64,
+    #[serde(rename = "DiscoveryData")]
     pub discovery_data:&'a str
 }
-struct DiscoverRequestVisitor;
-impl<'de> Visitor<'de> for DiscoverRequestVisitor {
-    type Value = DiscoverRequest<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut discovery_type = None;
-                let mut discovery_data = None;
-
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "DiscoveryType" => discovery_type = Some(map.next_value::<i64>()?),
-                        "DiscoveryData" => discovery_data = Some(map.next_value::<&str>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{discovery_type:discovery_type.unwrap(), discovery_data:discovery_data.unwrap()})
-    }
-}
-impl<'de> Deserialize<'de> for DiscoverRequest<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(DiscoverRequestVisitor{})
-    }
-}
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct ExternalConnectivityRequest<'a> {
+    #[serde(rename = "NetworkId")]
     pub network_id:&'a str,
+    #[serde(rename = "EndpointId")]
     pub endpoint_id: &'a str,
+    #[serde(rename = "Options")]
     pub options: HashMap<&'a str, &'a str>
 }
-struct ExternalConnectivityRequestVisitor;
-impl<'de> Visitor<'de> for ExternalConnectivityRequestVisitor {
-    type Value = ExternalConnectivityRequest<'de>;
 
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(formatter, "Expected a map or a struct.")
-    }
-
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::MapAccess<'de>, {
-                let mut network_id = None;
-                let mut endpoint_id = None;
-                let mut options = None;
-
-                while let Some(k) = map.next_key::<&str>()? {
-                    match k {
-                        "NetworkId" => network_id = Some(map.next_value::<&str>()?),
-                        "Options" => options = Some(map.next_value::<HashMap<&str, &str>>()?),
-                        "EndpointId" => endpoint_id = Some(map.next_value::<&str>()?),
-                        _ => (),
-                    }
-                }
-
-                Ok(Self::Value{network_id:network_id.unwrap(), options:options.unwrap(), endpoint_id:endpoint_id.unwrap()})
-    }
-}
-impl<'de> Deserialize<'de> for ExternalConnectivityRequest<'de> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de> {
-        deserializer.deserialize_map(ExternalConnectivityRequestVisitor{})
-    }
-}
 pub trait Network {
     fn get_capabilities(&self) -> CapabilitiesResponse;
     fn create_network(&self, request: &CreateNetworkRequest);
@@ -510,7 +206,7 @@ pub trait Network {
 	fn create_endpoint(&self, request: &CreateEndpointRequest) -> Result<CreateEndpointResponse, ErrorResponse>;
 	fn delete_endpoint(&self, request: &EndpointRequest);
 	fn endpoint_info(&self, request: &EndpointRequest) -> Result<InfoResponse, ErrorResponse>;
-	fn join(&self, request: &EndpointRequest) -> Result<JoinResponse, ErrorResponse>;
+	fn join(&self, request: &JoinRequest) -> Result<JoinResponse, ErrorResponse>;
 	fn leave(&self, request: &EndpointRequest);
 	fn discover_new(&self, request: &DiscoverRequest);
 	fn discover_delete(&self, request: &DiscoverRequest);
@@ -538,7 +234,7 @@ pub fn post<N:Network>(driver:&N, url:&str, data:&str) -> String {
             Err(e) => serde_json::to_string(&e).unwrap(),
         }},
         DELETE_ENDPOINT_PATH => {driver.delete_endpoint(&serde_json::from_str::<EndpointRequest>(data).unwrap()); String::from(EMPTY)},
-        JOIN_PATH => { match driver.join(&serde_json::from_str::<EndpointRequest>(data).unwrap()) {
+        JOIN_PATH => { match driver.join(&serde_json::from_str::<JoinRequest>(data).unwrap()) {
             Ok(r) => serde_json::to_string(&r).unwrap(),
             Err(e) => serde_json::to_string(&e).unwrap(),
         }},

@@ -1,6 +1,6 @@
 pub mod network;
 
-use network::api::{Network, CreateNetworkRequest, AllocateNetworkRequest, NetworkRequest, CreateEndpointRequest, EndpointRequest, DiscoverRequest, ExternalConnectivityRequest};
+use network::api::{Network, CreateNetworkRequest, AllocateNetworkRequest, NetworkRequest, CreateEndpointRequest, EndpointRequest, DiscoverRequest, ExternalConnectivityRequest, JoinRequest};
 
 struct Test;
 impl Network for Test {
@@ -36,7 +36,7 @@ impl Network for Test {
         todo!()
     }
 
-    fn join(&self, request: &EndpointRequest) -> Result<network::api::JoinResponse, network::api::ErrorResponse> {
+    fn join(&self, request: &JoinRequest) -> Result<network::api::JoinResponse, network::api::ErrorResponse> {
         todo!()
     }
 
@@ -63,5 +63,5 @@ impl Network for Test {
 
 fn main() {
     let t = Test{};
-    println!("{}", network::api::post(&t, "/NetworkDriver.CreateNetwork", "{\"NetworkId\": \"poop\", \"Options\":{}, \"IPv4Data\":[{\"Pool\":\"no\"}], \"IPv6Data\":[]}"));
+    println!("{}", network::api::post(&t, "/NetworkDriver.CreateNetwork", "{\"NetworkId\": \"poop\", \"Options\":{}, \"IPv4Data\":[], \"IPv6Data\":[]}"));
 }
